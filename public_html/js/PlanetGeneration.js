@@ -24,6 +24,7 @@ var renderer;
 var scene;
 var camera;
 var earthMesh;
+var cloudMesh;
 
 function color(number) {
 	this.r = 255;
@@ -47,6 +48,7 @@ var VIEW_ANGLE = 15,
 	FAR = 1000;
 
 var $container = $('#container');
+
 
 renderer = new THREE.WebGLRenderer();
 camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
@@ -95,18 +97,21 @@ sphere.applyMatrix(matrix);*/
 
 var mapImage = THREE.ImageUtils.loadTexture("images/Earth2/no_clouds_4k.jpg");
 var mapHeight = THREE.ImageUtils.loadTexture("images/Earth2/elev_bump_4k.jpg");
-
+var cldImage = THREE.ImageUtils.loadTexture("images/Earth2/fair_clouds_8k.jpg");
 
 
 //var canvas2 = generateMoire();
 var canvas2 = generateMoire32();
-
+var canvasClouds = generateClouds32();
 
 var texture2 = new THREE.Texture(canvas2);
 texture2.needsUpdate = true;
 
+var textureCloud = new THREE.Texture(canvasClouds);
+textureCloud.needsUpdate = true;
 
-var thingy1 = new THREE.MeshPhongMaterial({
+
+var planetMaterial = new THREE.MeshPhongMaterial({
 	//map: mapImage
 	map: texture2
 	//map: texture
@@ -117,9 +122,21 @@ var thingy1 = new THREE.MeshPhongMaterial({
 	//specular: new THREE.Color('grey')
 });
 
+var cloudMaterial = new THREE.MeshPhongMaterial({
+	//map:cldImage,
+	map: textureCloud,
+	transparent: true
+});
+
+cloudMesh = new THREE.Mesh(
+	new THREE.SphereGeometry(0.6, 32, 32),
+	cloudMaterial);
+
+
+
 earthMesh = new THREE.Mesh(
 	new THREE.SphereGeometry(0.5, 32, 32),
-	thingy1);
+	planetMaterial);
 
 /*
 var earthMesh = new THREE.Mesh(
@@ -135,7 +152,7 @@ var earthMesh = new THREE.Mesh(
 	})
 );*/
 scene.add(earthMesh);
-
+scene.add(cloudMesh);
 
 //create a point light
 var pointLight = new THREE.PointLight(0xFFFFFF);
@@ -232,6 +249,56 @@ function generateMoire32() {
 			
 			data[y*width2 + x] =
 				(pixel.a	<< 24)	|	//alpha
+				(pixel.b	<< 16)	|	//blue
+				(pixel.g	<<	8)	|	//green
+				pixel.r;
+		}
+	}
+	imageData.data.set(buf8);
+	
+	ctx2.putImageData(imageData, 0, 0);
+	
+	ctx2.fillStyle = "yellow";
+	ctx2.fillRect(0, 0, 75, 75);
+
+	return canvas2;
+}
+
+function generateClouds32() {
+	
+	var canvas2 = document.createElement('canvas');
+	var ctx2 = canvas2.getContext('2d');
+	//var imageData2 = ctx2.createImageData(100, 100);
+	var width2 = 300;
+	var height2 = 150;
+	
+	var imageData = ctx2.getImageData(0, 0, width2, height2);
+	
+	var buf = new ArrayBuffer(imageData.data.length);
+	var buf8 = new Uint8ClampedArray(buf);
+	var data = new Uint32Array(buf);
+
+	for (var y = 0; y < height2; y++) {
+		for (var x = 0; x < width2; x++) {
+			//var value = x * y & 0xff;
+			
+			/*var r = 128*((Math.sin(y/30))+1);
+			//var r = 128;
+			//var g = 128*((Math.cos(y/60))+1);
+			//var g = 128*(Math.sin(y/30)+1);
+			var g = 128;
+			var b = 128;
+			
+			data[y*width2 + x] =
+				(255	<< 24)	|	//alpha
+				(b	<< 16)	|	//blue
+				(g	<<	8)	|	//green
+				r;*/
+			
+			var pixel = getPixel(x, y);
+			
+			data[y*width2 + x] =
+				(100	<< 24)	|	//alpha
 				(pixel.b	<< 16)	|	//blue
 				(pixel.g	<<	8)	|	//green
 				pixel.r;
