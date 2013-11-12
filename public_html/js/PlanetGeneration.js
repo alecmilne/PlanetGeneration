@@ -23,8 +23,10 @@ document.body.appendChild(canvas);
 var renderer;
 var scene;
 var camera;
+var planetMesh;
 var earthMesh;
-var cloudMesh;
+var cloudMeshFar;
+var cloudMeshNear;
 
 function color(number) {
 	this.r = 255;
@@ -95,10 +97,24 @@ sphere.applyMatrix(matrix);*/
 //scene.add(sphere);
 
 
-var mapImage = THREE.ImageUtils.loadTexture("images/Earth2/no_clouds_4k.jpg");
-var mapHeight = THREE.ImageUtils.loadTexture("images/Earth2/elev_bump_4k.jpg");
-var cldImage = THREE.ImageUtils.loadTexture("images/Earth2/fair_clouds_8k.jpg");
+var mapImage = THREE.ImageUtils.loadTexture("images/earthmap1k.jpg");
+var mapHeight = THREE.ImageUtils.loadTexture("images/earthbump1k.jpg");
+var mapSpecular = THREE.ImageUtils.loadTexture("images/earthspec1k.jpg");
+var cldImage = THREE.ImageUtils.loadTexture("images/fair_clouds_8k.jpg");
 
+var earthMaterial = new THREE.MeshPhongMaterial({
+	map: mapImage,
+	//map: texture2,
+	side: THREE.FrontSide,
+	transparent: false,
+	opacity: 1,
+	//map: texture
+	//map: mapHeight,
+	bumpMap: mapHeight,
+	bumpScale: 0.05,
+	specularMap: mapSpecular,
+	specular: new THREE.Color('grey')
+});
 
 //var canvas2 = generateMoire();
 var canvas2 = generateMoire32();
@@ -112,8 +128,11 @@ textureCloud.needsUpdate = true;
 
 
 var planetMaterial = new THREE.MeshPhongMaterial({
-	//map: mapImage
-	map: texture2
+	//map: mapImage,
+	map: texture2,
+	side: THREE.FrontSide,
+	transparent: false,
+	opacity: 1
 	//map: texture
 	//map: mapHeight,
 	//bumpMap: mapHeight,
@@ -122,21 +141,35 @@ var planetMaterial = new THREE.MeshPhongMaterial({
 	//specular: new THREE.Color('grey')
 });
 
-var cloudMaterial = new THREE.MeshPhongMaterial({
+var cloudMaterialFar = new THREE.MeshPhongMaterial({
 	//map:cldImage,
 	map: textureCloud,
-	transparent: true
+	transparent: true,
+	side: THREE.BackSide
+	
+	//transparent: true,
+	//opacity: 0.5
 });
 
-cloudMesh = new THREE.Mesh(
-	new THREE.SphereGeometry(0.6, 32, 32),
-	cloudMaterial);
+var cloudMaterialNear = new THREE.MeshPhongMaterial({
+	//map:cldImage,
+	map: textureCloud,
+	transparent: true,
+	side: THREE.FrontSide
+	
+	//transparent: true,
+	//opacity: 0.5
+});
+//cloudMaterial.side = THREE.BackSide;
+
+cloudMeshFar = new THREE.Mesh( new THREE.SphereGeometry(1.5, 32, 32), cloudMaterialFar);
+
+cloudMeshNear = new THREE.Mesh(	new THREE.SphereGeometry(1.5, 32, 32), cloudMaterialNear);
 
 
-
-earthMesh = new THREE.Mesh(
-	new THREE.SphereGeometry(0.5, 32, 32),
-	planetMaterial);
+planetMesh = new THREE.Mesh( new THREE.SphereGeometry(0.5, 32, 32), planetMaterial);
+	
+earthMesh = new THREE.Mesh( new THREE.SphereGeometry(0.5, 32, 32), earthMaterial);
 
 /*
 var earthMesh = new THREE.Mesh(
@@ -151,8 +184,10 @@ var earthMesh = new THREE.Mesh(
 		specular: new THREE.Color('grey')
 	})
 );*/
+//scene.add(planetMesh);
 scene.add(earthMesh);
-scene.add(cloudMesh);
+scene.add(cloudMeshFar);
+scene.add(cloudMeshNear);
 
 //create a point light
 var pointLight = new THREE.PointLight(0xFFFFFF);
@@ -199,9 +234,16 @@ render();
 function render() {
 	//controls.update();
 	
-	earthMesh.rotation.y += 0.0035;
-	earthMesh.rotation.x -= 0.0005;
-	earthMesh.rotation.z -= 0.0005;
+	planetMesh.rotation.y += 0.0035;
+	planetMesh.rotation.x -= 0.0005;
+	planetMesh.rotation.z -= 0.0005;
+	
+	//earthMesh.rotation.y += 0.0035;
+	//earthMesh.rotation.x -= 0.0005;
+	//earthMesh.rotation.z -= 0.0005;
+	
+	cloudMeshFar.rotation.y = -2;
+	cloudMeshNear.rotation.y = -2;
 	
 	//earthMesh.rotation.y = 1;
 	//earthMesh.rotation.x = 1;
