@@ -191,8 +191,8 @@ var earthMesh = new THREE.Mesh(
 );*/
 scene.add(planetMesh);
 //scene.add(earthMesh);
-scene.add(cloudMeshFar);
-scene.add(cloudMeshNear);
+//scene.add(cloudMeshFar);
+//scene.add(cloudMeshNear);
 
 //create a point light
 var pointLight = new THREE.PointLight(0xFFFFFF);
@@ -239,9 +239,9 @@ render();
 function render() {
 	//controls.update();
 	
-	//planetMesh.rotation.y += 0.0035;
-	//planetMesh.rotation.x -= 0.0005;
-	//planetMesh.rotation.z -= 0.0005;
+	planetMesh.rotation.y += 0.0035;
+	planetMesh.rotation.x -= 0.0005;
+	planetMesh.rotation.z -= 0.0005;
 	
 	//earthMesh.rotation.y += 0.0035;
 	//earthMesh.rotation.x -= 0.0005;
@@ -431,20 +431,20 @@ function generatePlanetTexture() {
 		}
 	}
 	
-	for (var iteration = 0; iteration < 1; ++iteration) {
+	for (var iteration = 0; iteration < 1000; ++iteration) {
 		var r = Math.random();
-		r = 0.9;
+		//r = 0.9;
 		
 		var plane_ele = Math.random()*180 - 90;
-		plane_ele = 0;
+		//plane_ele = 0;
 		var plane_ele_rad = plane_ele * Math.PI / 180;
 		
 		var plane_azi = Math.random()*360;
-		plane_azi = 90;
+		//plane_azi = 90;
 		var plane_azi_rad = plane_azi * Math.PI / 180;
 		
 		var side = Math.random() > 0.5 ? -1 : 1;
-		side = 1;
+		//side = 1;
 		
 		var nx = r * Math.cos(plane_ele_rad)*Math.cos(plane_azi_rad);
 		var ny = r * Math.cos(plane_ele_rad)*Math.sin(plane_azi_rad);
@@ -541,19 +541,20 @@ function generatePlanetTexture() {
 				}*/
 				
 				if (d > 0) {
-					//data[index] += side;
-					data[index] = 255;
+					data[index] += side;
+					//data[index] = 255;
 					data[++index] += side;
 					data[++index] += side;
 					data[++index] = 255;
 				} else {
-					//data[index] -= side;
-					data[index] = 0;
+					data[index] -= side;
+					//data[index] = 0;
 					data[++index] -= side;
 					data[++index] -= side;
 					data[++index] = 255;
 				}
 				
+				/*
 				if (ele > plane_ele_max - 1 &&
 					ele < plane_ele_max + 1) {
 					data[index] = 0;
@@ -595,7 +596,7 @@ function generatePlanetTexture() {
 					data[++index] = 0;
 					data[++index] = 0;
 					data[++index] = 255;
-				}
+				}*/
 			}
 		}
 	}
@@ -637,11 +638,12 @@ function generatePlanet() {
 		map: texture2,
 		side: THREE.FrontSide,
 		transparent: false,
-		opacity: 1
+		opacity: 1,
 		//map: texture
 		//map: mapHeight,
 		//bumpMap: mapHeight,
-		//bumpScale: 0.5
+		bumpMap: texture2,
+		bumpScale: 0.1
 		//specularMap: THREE.ImageUtils.loadTexture('images/Earth2/water_4k.png'),
 		//specular: new THREE.Color('grey')
 	});
