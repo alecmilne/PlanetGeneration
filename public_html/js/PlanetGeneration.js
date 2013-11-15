@@ -27,6 +27,7 @@ var planetMesh;
 var earthMesh;
 var cloudMeshFar;
 var cloudMeshNear;
+var d_duration;
 
 function color(number) {
 	this.r = 255;
@@ -121,9 +122,13 @@ earthMesh = new THREE.Mesh( new THREE.SphereGeometry(0.5, 32, 32), earthMaterial
 //var cldImage = THREE.ImageUtils.loadTexture("images/fair_clouds_8k.jpg");
 //var canvas2 = generateMoire();
 
-
+var d_start = new Date();
 
 var planetMaterial = generatePlanet();
+
+var d_end = new Date();
+
+d_duration = d_end - d_start;
 /*var canvas2 = generateMoire32();
 var texture2 = new THREE.Texture(canvas2);
 texture2.needsUpdate = true;
@@ -254,6 +259,9 @@ function render() {
 	//earthMesh.rotation.x = 1;
 	//earthMesh.rotation.z = 0;
 	
+	ctx.font="30px Arial";
+	ctx.fillText(d_duration, 10, 50);
+	
 	//clouds.rotation.y += 0.0005;  
 	requestAnimationFrame(render);
 	renderer.render(scene, camera);
@@ -327,21 +335,6 @@ function generateClouds32() {
 
 	for (var y = 0; y < height2; y++) {
 		for (var x = 0; x < width2; x++) {
-			//var value = x * y & 0xff;
-			
-			/*var r = 128*((Math.sin(y/30))+1);
-			//var r = 128;
-			//var g = 128*((Math.cos(y/60))+1);
-			//var g = 128*(Math.sin(y/30)+1);
-			var g = 128;
-			var b = 128;
-			
-			data[y*width2 + x] =
-				(255	<< 24)	|	//alpha
-				(b	<< 16)	|	//blue
-				(g	<<	8)	|	//green
-				r;*/
-			
 			var pixel = getPixel(x, y);
 			
 			data[y*width2 + x] =
@@ -366,7 +359,6 @@ function getPixel(x, y) {
 	
 	pixel.r = 127*((Math.sin((y/150)*2*Math.PI))+1);
 	pixel.g = 127*((Math.cos((x/300)*2*Math.PI))+1);
-	//pixel.g = ((Math.cos(x*Math.PI/150))+1)*127;
 	pixel.b = 128;
 	
 	return pixel;
@@ -405,7 +397,7 @@ function generateMoire() {
 	return canvas2;
 }
 
-function generatePlanetTexture() {
+function generateSpecularTexture(datatemp) {
 	var canvas2 = document.createElement('canvas');
 	var ctx2 = canvas2.getContext('2d');
 	//var imageData2 = ctx2.createImageData(100, 100);
@@ -414,9 +406,161 @@ function generatePlanetTexture() {
 	
 	var imageData = ctx2.getImageData(0, 0, width2, height2);
 	
-	var data = imageData.data;
+	for (var x = 0; x < width2; ++x) {
+		for (var y = 0; y < height2; ++y) {
+			var index = (y * width2 + x) * 4;
+			//R
+			var r = datatemp[index + 0];
+			
+			//G
+			var g = datatemp[index + 1];
+			
+			//B
+			var b = datatemp[index + 2];
+			if (b < 128) {
+				r = 255;
+				g = 255;
+				b = 255;
+			} else {
+				r = 0;
+				g = 0;
+				b = 0;
+			}
+			
+			//A
+			imageData.data[index + 0] = r;
+			imageData.data[index + 1] = g;
+			imageData.data[index + 2] = b;
+			imageData.data[index + 3] = datatemp[index + 3];
+		}
+	}
+	ctx2.putImageData(imageData, 0, 0);
+	
+	return canvas2;
+}
+
+function generateHeightTexture(datatemp) {
+	var canvas2 = document.createElement('canvas');
+	var ctx2 = canvas2.getContext('2d');
+	//var imageData2 = ctx2.createImageData(100, 100);
+	var width2 = 300;
+	var height2 = 150;
+	
+	var imageData = ctx2.getImageData(0, 0, width2, height2);
 	
 	for (var x = 0; x < width2; ++x) {
+		for (var y = 0; y < height2; ++y) {
+			var index = (y * width2 + x) * 4;
+			//R
+			var r = datatemp[index + 0];
+			
+			//G
+			var g = datatemp[index + 1];
+			
+			//B
+			var b = datatemp[index + 2];
+			if (b < 128) {
+				r = 0;
+				g = 0;
+				b = 0;
+			} else {
+				r -= 128;
+				r *= 2;
+				g -= 128;
+				g *= 2;
+				b -= 128;
+				b *= 2;
+			}
+			
+			//A
+			imageData.data[index + 0] = r;
+			imageData.data[index + 1] = g;
+			imageData.data[index + 2] = b;
+			imageData.data[index + 3] = datatemp[index + 3];
+		}
+	}
+	ctx2.putImageData(imageData, 0, 0);
+	
+	return canvas2;
+}
+
+function generateTexture(datatemp) {
+	var canvas2 = document.createElement('canvas');
+	var ctx2 = canvas2.getContext('2d');
+	//var imageData2 = ctx2.createImageData(100, 100);
+	var width2 = 300;
+	var height2 = 150;
+	
+	var imageData = ctx2.getImageData(0, 0, width2, height2);
+	
+	for (var x = 0; x < width2; ++x) {
+		for (var y = 0; y < height2; ++y) {
+			var index = (y * width2 + x) * 4;
+			
+			imageData.data[index + 0] = datatemp[index + 0];
+			imageData.data[index + 1] = datatemp[index + 1];
+			imageData.data[index + 2] = datatemp[index + 2];
+			imageData.data[index + 3] = datatemp[index + 3];
+		}
+	}
+	ctx2.putImageData(imageData, 0, 0);
+	
+	return canvas2;
+}
+
+function generatePlanetTexture(datatemp) {
+	var canvas2 = document.createElement('canvas');
+	var ctx2 = canvas2.getContext('2d');
+	//var imageData2 = ctx2.createImageData(100, 100);
+	var width2 = 300;
+	var height2 = 150;
+	
+	var imageData = ctx2.getImageData(0, 0, width2, height2);
+	
+	//var datatemp = generateCutTextureData(300, 150, 10);
+	
+	//var data = imageData.data;
+	
+	for (var x = 0; x < width2; ++x) {
+		for (var y = 0; y < height2; ++y) {
+			var index = (y * width2 + x) * 4;
+			//R
+			var r = datatemp[index + 0];
+			
+			//G
+			var g = datatemp[index + 1];
+			
+			//B
+			var b = datatemp[index + 2];
+			if (b < 128) {
+				r = 0;
+				g = 0;
+				b = 255;
+			} else {
+				r = 0;
+				
+				b = 0;
+			}
+			
+			
+			//A
+			imageData.data[index + 0] = r;
+			imageData.data[index + 1] = g;
+			imageData.data[index + 2] = b;
+			imageData.data[index + 3] = datatemp[index + 3];
+		}
+	}
+	
+	//for (var i = 0; i < datatemp.length; i++) {
+		//data[i] = datatemp[i];
+	//	imageData.data[i] = datatemp[i];
+	//}
+	
+	//ctx2.setImageData(0, 0, width2, height2) = generateCutTextureData(300, 150, 10);
+	
+	//imageData.data = generateCutTextureData(300, 150, 10);
+	
+	/*for (var x = 0; x < width2; ++x) {
 		for (var y = 0; y < height2; ++y) {
 			var index = (y * width2 + x) * 4;
 			
@@ -431,7 +575,7 @@ function generatePlanetTexture() {
 		}
 	}
 	
-	for (var iteration = 0; iteration < 1000; ++iteration) {
+	for (var iteration = 0; iteration < 10; ++iteration) {
 		var r = Math.random();
 		//r = 0.9;
 		
@@ -450,7 +594,6 @@ function generatePlanetTexture() {
 		var ny = r * Math.cos(plane_ele_rad)*Math.sin(plane_azi_rad);
 		var nz = r * Math.sin(plane_ele_rad);
 		
-		//var elerad_diff = Math.acos(r);
 		var plane_ele_rad_diff = Math.acos(r);
 		var plane_ele_rad_min = plane_ele_rad - plane_ele_rad_diff;
 		var plane_ele_min = plane_ele_rad_min * 180 / Math.PI;
@@ -458,60 +601,26 @@ function generatePlanetTexture() {
 		var plane_ele_rad_max = plane_ele_rad + plane_ele_rad_diff;
 		var plane_ele_max = plane_ele_rad_max * 180 / Math.PI;
 		
-		
 		var plane_ele_rad_point = Math.asin(Math.sin(plane_ele_rad)/r);
 		var plane_rad_point = plane_ele_rad_point * 180 / Math.PI;
 		
-		
-		//var plane_azi_rad_diff = Math.asin(Math.sin(plane_ele_rad_diff)/Math.sin(plane_ele_rad));
 		var plane_azi_rad_diff = Math.asin(Math.sin(plane_ele_rad_diff)/Math.cos(plane_ele_rad));
 		var plane_azi_rad_min = plane_azi_rad - plane_azi_rad_diff;
 		var plane_azi_min = plane_azi_rad_min * 180 / Math.PI;
 		
 		var plane_azi_rad_max = plane_azi_rad + plane_azi_rad_diff;
 		var plane_azi_max = plane_azi_rad_max * 180 / Math.PI;
-		//elerad_diff = acos(radius);
-		//elerad_min = elerad - elerad_diff;
-		//elerad_max = elerad + elerad_diff;
-		//elerad_point = acos(cos(elerad)/cos(elerad_diff));
-
-		//azirad_diff = asin(sin(elerad_diff)/sin(elerad));
-
-		//azirad_min = azirad - azirad_diff;
-		//azirad_max = azirad + azirad_diff;
-		
 		
 		for (var x = 0; x < width2; ++x) {
-
 			for (var y = 0; y < height2; ++y) {
 				
-				
 				var index = (y * width2 + x) * 4;
-
-				//var r = 255;
-				//var g = 255;
-				//var b = 255;
 				
 				var ele = 90 - (y * 180 / height2);
 				var ele_rad = ele * Math.PI / 180;
 				
 				var azi = x * 360 / width2;
 				var azi_rad = azi * Math.PI / 180;
-				
-				/*if (ele > 0) {
-					r = ele*3;
-				} else {
-					g = 255 + ele*3;
-					b = 255 + ele*3;
-				}*/
-
-				/*if (ele < plane_ele) {
-					r = 0;
-				}
-
-				if (azi < plane_azi) {
-					g = 0;
-				}*/
 				
 				var px = Math.cos(ele_rad)*Math.cos(azi_rad);
 				var py = Math.cos(ele_rad)*Math.sin(azi_rad);
@@ -522,23 +631,6 @@ function generatePlanetTexture() {
 				var vz = pz - nz;
 				
 				var d = dotProduct(nx, ny, nz, vx, vy, vz);
-
-				//var pixel = getPixel(x, y);
-				
-				/*if (ele > plane_ele - 30 &&
-					ele < plane_ele + 30 &&
-					azi > plane_azi - 90 &&
-					azi < plane_azi + 90) {
-					data[index] += side;
-					data[++index] += side;
-					data[++index] += side;
-					data[++index] = 255;
-				} else {
-					data[index] -= side;
-					data[++index] -= side;
-					data[++index] -= side;
-					data[++index] = 255;
-				}*/
 				
 				if (d > 0) {
 					data[index] += side;
@@ -554,58 +646,364 @@ function generatePlanetTexture() {
 					data[++index] = 255;
 				}
 				
-				/*
-				if (ele > plane_ele_max - 1 &&
-					ele < plane_ele_max + 1) {
-					data[index] = 0;
-					data[++index] = 0;
-					data[++index] = 0;
-					data[++index] = 255;
-				}
-				
-				if (ele > plane_ele_min - 1 &&
-					ele < plane_ele_min + 1) {
-					data[index] = 255;
-					data[++index] = 255;
-					data[++index] = 255;
-					data[++index] = 255;
-				}
-				
-				
-				if (ele > plane_rad_point - 1 &&
-					ele < plane_rad_point + 1) {
-					data[index] = 128;
-					data[++index] = 128;
-					data[++index] = 128;
-					data[++index] = 255;
-				}
-				
-				
-				
-				if (azi > plane_azi_min - 1 &&
-					azi < plane_azi_min + 1) {
-					data[index] = 255;
-					data[++index] = 255;
-					data[++index] = 255;
-					data[++index] = 255;
-				}
-				
-				if (azi > plane_azi_max - 1 &&
-					azi < plane_azi_max + 1) {
-					data[index] = 0;
-					data[++index] = 0;
-					data[++index] = 0;
-					data[++index] = 255;
-				}*/
 			}
 		}
-	}
+	}*/
 	ctx2.putImageData(imageData, 0, 0);
 	
 	//ctx2.fillStyle = "yellow";
 	//ctx2.fillRect(0, 0, 75, 75);
 	
+	
+	
 	return canvas2;
+}
+
+function generateCutTextureDataTESTING(width, height, iterations) {
+	
+	var data = new Array();
+	
+	for (var x = 0; x < width; ++x) {
+		for (var y = 0; y < height; ++y) {
+			var index = (y * width + x) * 4;
+			
+			var r = 128;
+			var g = 128;
+			var b = 128;
+			
+			data[index] = r;
+			data[++index] = g;
+			data[++index] = b;
+			data[++index] = 255;
+		}
+	}
+	
+	for (var iteration = 0; iteration < iterations; ++iteration) {
+		var r = Math.random();
+		//r = 0.6;
+		
+		var plane_ele = Math.random()*180 - 90;
+		//plane_ele = 20;
+		var plane_ele_rad = plane_ele * Math.PI / 180;
+		
+		var plane_azi = Math.random()*360;
+		//var plane_azi = 340;
+		var plane_azi_rad = plane_azi * Math.PI / 180;
+		
+		var side = Math.random() > 0.5 ? -1 : 1;
+		//side = 1;
+		
+		var nx = r * Math.cos(plane_ele_rad)*Math.cos(plane_azi_rad);
+		var ny = r * Math.cos(plane_ele_rad)*Math.sin(plane_azi_rad);
+		var nz = r * Math.sin(plane_ele_rad);
+		
+		var plane_ele_rad_diff = Math.acos(r);
+		var plane_ele_rad_min = plane_ele_rad - plane_ele_rad_diff;
+		//if (plane_ele_rad_min < -Math.PI/2) {
+			//var stop_here;
+		//	plane_ele_rad_min += Math.PI/2;
+		//}
+		var plane_ele_min = plane_ele_rad_min * 180 / Math.PI;
+		
+		var plane_ele_rad_max = plane_ele_rad + plane_ele_rad_diff;
+		//if (plane_ele_rad_max > Math.PI/2) {
+		//	plane_ele_rad_max -= Math.PI/2;
+		//}
+		var plane_ele_max = plane_ele_rad_max * 180 / Math.PI;
+		
+		
+		var plane_ele_rad_point = Math.asin(Math.sin(plane_ele_rad)/r);
+		var plane_rad_point = plane_ele_rad_point * 180 / Math.PI;
+		
+		
+		var plane_azi_rad_diff = Math.asin(Math.sin(plane_ele_rad_diff)/Math.cos(plane_ele_rad));
+		var plane_azi_rad_min = plane_azi_rad - plane_azi_rad_diff;
+		if (plane_azi_rad_min < 0) {
+			plane_azi_rad_min += Math.PI*2;
+		}
+		var plane_azi_min = plane_azi_rad_min * 180 / Math.PI;
+		
+		var plane_azi_rad_max = plane_azi_rad + plane_azi_rad_diff;
+		if (plane_azi_rad_max > Math.PI*2) {
+			plane_azi_rad_max -= Math.PI*2;
+		}
+		var plane_azi_max = plane_azi_rad_max * 180 / Math.PI;
+		
+		var cutType = "";
+		if (plane_ele_max > 90) {
+			cutType = "north";
+		} else if (plane_ele_min < -90) {
+			cutType = "south";
+		} else if (plane_azi_max < plane_azi_min) {
+		//} else if (plane_azi_min < 0 || plane_azi_max > 360) {
+			cutType = "straddle";
+		} else {
+			cutType = "normal";
+		}
+		
+		for (var x = 0; x < width; ++x) {
+			
+			var azi = x * 360 / width;
+			var azi_rad = azi * Math.PI / 180;
+			
+			var outside = false;
+			switch (cutType) {
+				case "straddle":
+					if (azi_rad > plane_azi_rad_min && azi_rad < plane_azi_rad_max) {
+						outside = true;
+					}
+					break;
+				case "normal":
+					if (azi_rad < plane_azi_rad_min || azi_rad > plane_azi_rad_max) {
+						outside = true;
+					}
+					break;
+				case "north":
+					break;
+				case "south":
+					break;
+			}
+			
+			for (var y = 0; y < height; ++y) {
+				
+				var index = (y * width + x) * 4;
+				
+				if (outside) {
+					//if (side > 0) {
+						data[index] -= side;
+						data[++index] -= side;
+						data[++index] -= side;
+						data[++index] = 255;
+					//} else {
+					//	data[index] = 200;
+					//	data[++index] = 200;
+					//	data[++index] = 200;
+					//	data[++index] = 255;
+					//}
+				} else {
+					
+					
+					var ele = 90 - (y * 180 / height);
+					var ele_rad = ele * Math.PI / 180;
+
+					
+					var ignore = false;
+					//var inside = false;
+					switch (cutType) {
+						case "straddle":
+
+							break;
+						case "normal":
+							if (ele_rad < plane_ele_rad_min || ele_rad > plane_ele_rad_max) {
+								ignore = true;
+							}
+							break;
+						case "north":
+							if (ele_rad < plane_ele_rad_min) {
+								ignore = true;
+							}// else if (ele_rad > plane_ele_rad_max) {
+							//	inside = true;
+							//}
+							break;
+						case "south":
+							if (ele_rad > plane_ele_rad_max) {
+								ignore = true;
+							}// else if (ele_rad < plane_ele_rad_min) {
+							//	inside = true;
+							//}
+							break;
+					}
+					
+					if (ignore) {
+						data[index] -= side;
+						data[++index] -= side;
+						data[++index] -= side;
+						data[++index] = 255;
+						//data[index] = 255;
+						//data[++index] = 128;
+						//data[++index] = 128;
+						//data[++index] = 255;
+					//} else if (inside) {
+					//	data[index] = 255;
+					//	data[++index] = 128;
+					//	data[++index] = 128;
+					//	data[++index] = 255;
+					} else {
+						
+						var px = Math.cos(ele_rad)*Math.cos(azi_rad);
+						var py = Math.cos(ele_rad)*Math.sin(azi_rad);
+						var pz = Math.sin(ele_rad);
+
+						var vx = px - nx;
+						var vy = py - ny;
+						var vz = pz - nz;
+
+						var d = dotProduct(nx, ny, nz, vx, vy, vz);
+
+						if (d > 0) {
+							data[index] += side;
+							data[++index] += side;
+							data[++index] += side;
+							data[++index] = 255;
+							
+							/*if (side > 0) {
+								data[index] = 200;
+								data[++index] = 200;
+								data[++index] = 200;
+								data[++index] = 255;
+							} else {
+								data[index] = 50;
+								data[++index] = 50;
+								data[++index] = 50;
+								data[++index] = 255;
+							}*/
+
+						} else {
+							data[index] -= side;
+							data[++index] -= side;
+							data[++index] -= side;
+							data[++index] = 255;
+							/*if (side > 0) {
+								data[index] = 50;
+								data[++index] = 50;
+								data[++index] = 50;
+								data[++index] = 255;
+							} else {
+								data[index] = 200;
+								data[++index] = 200;
+								data[++index] = 200;
+								data[++index] = 255;
+							}*/
+						}
+					}
+				}
+				
+			}
+		}
+	}
+	//ctx2.putImageData(imageData, 0, 0);
+	
+	//ctx2.fillStyle = "yellow";
+	//ctx2.fillRect(0, 0, 75, 75);
+	
+	return data;
+}
+
+function generateCutTextureData(width, height, iterations) {
+	
+	var data = new Array();
+	
+	for (var x = 0; x < width; ++x) {
+		for (var y = 0; y < height; ++y) {
+			var index = (y * width + x) * 4;
+			
+			var r = 128;
+			var g = 128;
+			var b = 128;
+			
+			data[index] = r;
+			data[++index] = g;
+			data[++index] = b;
+			data[++index] = 255;
+		}
+	}
+	
+	for (var iteration = 0; iteration < iterations; ++iteration) {
+		var r = Math.random();
+		//r = 0.9;
+		
+		var plane_ele = Math.random()*180 - 90;
+		//plane_ele = 0;
+		var plane_ele_rad = plane_ele * Math.PI / 180;
+		
+		var plane_azi = Math.random()*360;
+		//var plane_azi = 10;
+		var plane_azi_rad = plane_azi * Math.PI / 180;
+		
+		var side = Math.random() > 0.5 ? -1 : 1;
+		//side = 1;
+		
+		var nx = r * Math.cos(plane_ele_rad)*Math.cos(plane_azi_rad);
+		var ny = r * Math.cos(plane_ele_rad)*Math.sin(plane_azi_rad);
+		var nz = r * Math.sin(plane_ele_rad);
+		
+		var plane_ele_rad_diff = Math.acos(r);
+		var plane_ele_rad_min = plane_ele_rad - plane_ele_rad_diff;
+		var plane_ele_min = plane_ele_rad_min * 180 / Math.PI;
+		
+		var plane_ele_rad_max = plane_ele_rad + plane_ele_rad_diff;
+		var plane_ele_max = plane_ele_rad_max * 180 / Math.PI;
+		
+		
+		var plane_ele_rad_point = Math.asin(Math.sin(plane_ele_rad)/r);
+		var plane_rad_point = plane_ele_rad_point * 180 / Math.PI;
+		
+		
+		var plane_azi_rad_diff = Math.asin(Math.sin(plane_ele_rad_diff)/Math.cos(plane_ele_rad));
+		var plane_azi_rad_min = plane_azi_rad - plane_azi_rad_diff;
+		var plane_azi_min = plane_azi_rad_min * 180 / Math.PI;
+		
+		var plane_azi_rad_max = plane_azi_rad + plane_azi_rad_diff;
+		var plane_azi_max = plane_azi_rad_max * 180 / Math.PI;
+		
+		/*var cutType = "";
+		if (plane_ele_max > 90) {
+			cutType = "north";
+		} else if (plane_ele_min < -90) {
+			cutType = "south";
+		} else if (plane_azi_max < plane_azi_min) {
+			cutType = "straddle";
+		} else {
+			cutType = "normal";
+		}*/
+		
+		for (var x = 0; x < width; ++x) {
+
+			for (var y = 0; y < height; ++y) {
+				
+				var index = (y * width + x) * 4;
+				
+				
+				
+				var ele = 90 - (y * 180 / height);
+				var ele_rad = ele * Math.PI / 180;
+				
+				var azi = x * 360 / width;
+				var azi_rad = azi * Math.PI / 180;
+				
+				var px = Math.cos(ele_rad)*Math.cos(azi_rad);
+				var py = Math.cos(ele_rad)*Math.sin(azi_rad);
+				var pz = Math.sin(ele_rad);
+				
+				var vx = px - nx;
+				var vy = py - ny;
+				var vz = pz - nz;
+				
+				var d = dotProduct(nx, ny, nz, vx, vy, vz);
+				
+				if (d > 0) {
+					data[index] += side;
+					//data[index] = 255;
+					data[++index] += side;
+					data[++index] += side;
+					data[++index] = 255;
+				} else {
+					data[index] -= side;
+					//data[index] = 0;
+					data[++index] -= side;
+					data[++index] -= side;
+					data[++index] = 255;
+				}
+				
+			}
+		}
+	}
+	//ctx2.putImageData(imageData, 0, 0);
+	
+	//ctx2.fillStyle = "yellow";
+	//ctx2.fillRect(0, 0, 75, 75);
+	
+	return data;
 }
 
 function generateEarth() {
@@ -631,21 +1029,33 @@ function generateEarth() {
 
 function generatePlanet() {
 	//var canvas2 = ;
-	var texture2 = new THREE.Texture(generatePlanetTexture());
-	texture2.needsUpdate = true;
+	//var datatemp = generateCutTextureData(300, 150, 1000);
+	var datatemp = generateCutTextureDataTESTING(300, 150, 1000);
+	
+	var texture = new THREE.Texture(generateTexture(datatemp));
+	texture.needsUpdate = true;
+	
+	var textureColour = new THREE.Texture(generatePlanetTexture(datatemp));
+	textureColour.needsUpdate = true;
+	
+	var textureHeight = new THREE.Texture(generateHeightTexture(datatemp));
+	textureHeight.needsUpdate = true;
+	
+	var textureSpecular = new THREE.Texture(generateSpecularTexture(datatemp));
+	textureSpecular.needsUpdate = true;
+	
 	return planetMaterial = new THREE.MeshPhongMaterial({
-		//map: mapImage,
-		map: texture2,
+		map: textureColour,
+		//map: texture,
 		side: THREE.FrontSide,
 		transparent: false,
 		opacity: 1,
-		//map: texture
-		//map: mapHeight,
-		//bumpMap: mapHeight,
-		bumpMap: texture2,
-		bumpScale: 0.1
-		//specularMap: THREE.ImageUtils.loadTexture('images/Earth2/water_4k.png'),
-		//specular: new THREE.Color('grey')
+		
+		bumpMap: textureHeight,
+		bumpScale: 0.05,
+		
+		specularMap: textureSpecular,
+		specular: new THREE.Color('grey')
 	});
 }
 
