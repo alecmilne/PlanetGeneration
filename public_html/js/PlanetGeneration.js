@@ -29,6 +29,8 @@ var cloudMeshFar;
 var cloudMeshNear;
 var d_duration;
 
+var displayTexture;
+
 function color(number) {
 	this.r = 255;
 	this.g = 255;
@@ -69,53 +71,6 @@ renderer.setSize(WIDTH, HEIGHT);
 //attach the render-supplied DOM element
 $container.append(renderer.domElement);
 
-
-/*
-//create the sphere's material
-var sphereMaterial = new THREE.MeshBasicMaterial( { color:0xCC0000, wireframe: true });
-
-//var sphereMaterial = new THREE.MeshLambertMaterial( { color:0xCC0000 });
-
-//set up the sphere vars
-var radius = 50, segments = 16, rings = 16;
-
-//create a new mesh with sphere geometry
-var sphere = new THREE.Mesh(
-	new THREE.SphereGeometry(radius, segments, rings),
-	sphereMaterial);
-
-var matrix = new THREE.Matrix4();
-matrix.makeRotationZ(-Math.PI/8);
-sphere.applyMatrix(matrix);
-
-matrix.makeRotationX(-Math.PI/8);
-sphere.applyMatrix(matrix);*/
-
-//matrix.makeRotationY(-Math.PI/8);
-//sphere.applyMatrix(matrix);
-
-//add the sphere to the scene
-//scene.add(sphere);
-
-/*
-var mapImage = THREE.ImageUtils.loadTexture("images/earthmap1k.jpg");
-var mapHeight = THREE.ImageUtils.loadTexture("images/earthbump1k.jpg");
-var mapSpecular = THREE.ImageUtils.loadTexture("images/earthspec1k.jpg");
-
-
-var earthMaterial = new THREE.MeshPhongMaterial({
-	map: mapImage,
-	//map: texture2,
-	side: THREE.FrontSide,
-	transparent: false,
-	opacity: 1,
-	//map: texture
-	//map: mapHeight,
-	bumpMap: mapHeight,
-	bumpScale: 0.05,
-	specularMap: mapSpecular,
-	specular: new THREE.Color('grey')
-});*/
 var earthMaterial = generateEarth();
 earthMesh = new THREE.Mesh( new THREE.SphereGeometry(0.5, 32, 32), earthMaterial);
 
@@ -129,25 +84,7 @@ var planetMaterial = generatePlanet();
 var d_end = new Date();
 
 d_duration = d_end - d_start;
-/*var canvas2 = generateMoire32();
-var texture2 = new THREE.Texture(canvas2);
-texture2.needsUpdate = true;
-var planetMaterial = new THREE.MeshPhongMaterial({
-	//map: mapImage,
-	map: texture2,
-	side: THREE.FrontSide,
-	transparent: false,
-	opacity: 1
-	//map: texture
-	//map: mapHeight,
-	//bumpMap: mapHeight,
-	//bumpScale: 0.5
-	//specularMap: THREE.ImageUtils.loadTexture('images/Earth2/water_4k.png'),
-	//specular: new THREE.Color('grey')
-});*/
 
-
-//var canvasClouds = ;
 var textureCloud = new THREE.Texture(generateClouds32());
 textureCloud.needsUpdate = true;
 
@@ -179,27 +116,19 @@ cloudMeshNear = new THREE.Mesh(	new THREE.SphereGeometry(1.5, 32, 32), cloudMate
 
 planetMesh = new THREE.Mesh( new THREE.SphereGeometry(0.5, 32, 32), planetMaterial);
 	
+var planetMesh2 = new THREE.Mesh( new THREE.SphereGeometry(0.5, 32, 32), planetMaterial);
+planetMesh2.translateX(1.1);
+planetMesh2.rotation.y = Math.PI;
+scene.add(planetMesh2);
 
 
-/*
-var earthMesh = new THREE.Mesh(
-	new THREE.SphereGeometry(0.5, 32, 32),
-	new THREE.MeshPhongMaterial({
-		//map: THREE.ImageUtils.loadTexture('images/Earth2/no_clouds_4k.jpg'),
-		//bumpMap: THREE.ImageUtils.loadTexture('images/Earth2/no_clouds_4k.jpg'),
-		//bumpMap: THREE.ImageUtils.loadTexture('images/Earth2/elev_bump_4k.jpg'),
-		bumpMap: mapHeight,
-		//bumpScale: 0.5,
-		specularMap: THREE.ImageUtils.loadTexture('images/Earth2/water_4k.png'),
-		specular: new THREE.Color('grey')
-	})
-);*/
+
 scene.add(planetMesh);
 //scene.add(earthMesh);
 //scene.add(cloudMeshFar);
 //scene.add(cloudMeshNear);
 
-//create a point light
+
 var pointLight = new THREE.PointLight(0xFFFFFF);
 
 //set its position
@@ -261,6 +190,8 @@ function render() {
 	
 	ctx.font="30px Arial";
 	ctx.fillText(d_duration, 10, 50);
+	
+	
 	
 	//clouds.rotation.y += 0.0005;  
 	requestAnimationFrame(render);
@@ -511,26 +442,20 @@ function generateTexture(datatemp) {
 function generatePlanetTexture(datatemp) {
 	var canvas2 = document.createElement('canvas');
 	var ctx2 = canvas2.getContext('2d');
-	//var imageData2 = ctx2.createImageData(100, 100);
+	
 	var width2 = 300;
 	var height2 = 150;
 	
 	var imageData = ctx2.getImageData(0, 0, width2, height2);
 	
-	//var datatemp = generateCutTextureData(300, 150, 10);
-	
-	//var data = imageData.data;
-	
 	for (var x = 0; x < width2; ++x) {
 		for (var y = 0; y < height2; ++y) {
 			var index = (y * width2 + x) * 4;
-			//R
+			
 			var r = datatemp[index + 0];
 			
-			//G
 			var g = datatemp[index + 1];
 			
-			//B
 			var b = datatemp[index + 2];
 			if (b < 128) {
 				r = 0;
@@ -542,8 +467,6 @@ function generatePlanetTexture(datatemp) {
 				b = 0;
 			}
 			
-			
-			//A
 			imageData.data[index + 0] = r;
 			imageData.data[index + 1] = g;
 			imageData.data[index + 2] = b;
@@ -551,44 +474,45 @@ function generatePlanetTexture(datatemp) {
 		}
 	}
 	
-	//for (var i = 0; i < datatemp.length; i++) {
-		//data[i] = datatemp[i];
-	//	imageData.data[i] = datatemp[i];
-	//}
+	ctx2.putImageData(imageData, 0, 0);
 	
-	//ctx2.setImageData(0, 0, width2, height2) = generateCutTextureData(300, 150, 10);
+	return canvas2;
+}
+
+
+function generateCutTextureDataALGORITHM(width, height, iterations) {
 	
-	//imageData.data = generateCutTextureData(300, 150, 10);
+	var data = new Array();
 	
-	/*for (var x = 0; x < width2; ++x) {
-		for (var y = 0; y < height2; ++y) {
-			var index = (y * width2 + x) * 4;
+	for (var x = 0; x < width; ++x) {
+		for (var y = 0; y < height; ++y) {
+			var index = (y * width + x) * 4;
 			
-			var r = 128;
-			var g = 128;
-			var b = 128;
+			//var r = 128;
+			//var g = 128;
+			//var b = 128;
 			
-			data[index] = r;
-			data[++index] = g;
-			data[++index] = b;
+			data[index] = 128;
+			data[++index] = 128;
+			data[++index] = 128;
 			data[++index] = 255;
 		}
 	}
 	
-	for (var iteration = 0; iteration < 10; ++iteration) {
+	for (var iteration = 0; iteration < iterations; ++iteration) {
 		var r = Math.random();
-		//r = 0.9;
+		r = 0.6;
 		
 		var plane_ele = Math.random()*180 - 90;
-		//plane_ele = 0;
+		plane_ele = -80;
 		var plane_ele_rad = plane_ele * Math.PI / 180;
 		
 		var plane_azi = Math.random()*360;
-		//plane_azi = 90;
+		var plane_azi = 20;
 		var plane_azi_rad = plane_azi * Math.PI / 180;
 		
 		var side = Math.random() > 0.5 ? -1 : 1;
-		//side = 1;
+		side = 10;
 		
 		var nx = r * Math.cos(plane_ele_rad)*Math.cos(plane_azi_rad);
 		var ny = r * Math.cos(plane_ele_rad)*Math.sin(plane_azi_rad);
@@ -596,70 +520,129 @@ function generatePlanetTexture(datatemp) {
 		
 		var plane_ele_rad_diff = Math.acos(r);
 		var plane_ele_rad_min = plane_ele_rad - plane_ele_rad_diff;
+		//if (plane_ele_rad_min < -Math.PI/2) {
+			//var stop_here;
+		//	plane_ele_rad_min += Math.PI/2;
+		//}
 		var plane_ele_min = plane_ele_rad_min * 180 / Math.PI;
 		
 		var plane_ele_rad_max = plane_ele_rad + plane_ele_rad_diff;
+		//if (plane_ele_rad_max > Math.PI/2) {
+		//	plane_ele_rad_max -= Math.PI/2;
+		//}
 		var plane_ele_max = plane_ele_rad_max * 180 / Math.PI;
+		
 		
 		var plane_ele_rad_point = Math.asin(Math.sin(plane_ele_rad)/r);
 		var plane_rad_point = plane_ele_rad_point * 180 / Math.PI;
 		
+		
 		var plane_azi_rad_diff = Math.asin(Math.sin(plane_ele_rad_diff)/Math.cos(plane_ele_rad));
 		var plane_azi_rad_min = plane_azi_rad - plane_azi_rad_diff;
+		if (plane_azi_rad_min < 0) {
+			plane_azi_rad_min += Math.PI*2;
+		}
 		var plane_azi_min = plane_azi_rad_min * 180 / Math.PI;
 		
 		var plane_azi_rad_max = plane_azi_rad + plane_azi_rad_diff;
+		if (plane_azi_rad_max > Math.PI*2) {
+			plane_azi_rad_max -= Math.PI*2;
+		}
 		var plane_azi_max = plane_azi_rad_max * 180 / Math.PI;
 		
-		for (var x = 0; x < width2; ++x) {
-			for (var y = 0; y < height2; ++y) {
+		
+		var cutType = "";
+		if (plane_ele_max > 90) {
+			cutType = "north";
+		} else if (plane_ele_min < -90) {
+			cutType = "south";
+		} else if (plane_azi_max < plane_azi_min) {
+		//} else if (plane_azi_min < 0 || plane_azi_max > 360) {
+			cutType = "straddle";
+		} else {
+			cutType = "normal";
+		}
+		
+		
+		
+		
+		for (var x = 0; x < width; ++x) {
+			
+			var azi = x * 360 / width;
+			var azi_rad = azi * Math.PI / 180;
+			
+			
+			var A = plane_ele_rad;
+			var B = plane_azi_rad;
+			var Z = azi_rad;
+			
+			var J = Math.cos(Z)*Math.cos(A)*Math.cos(B) + Math.sin(Z)*Math.cos(A)*Math.sin(B);
+			
+			var R = Math.sqrt(J*J + (Math.sin(A))*(Math.sin(A)));
+			
+			var K = (nx*nx + ny*ny + nz*nz)/r;
+			var alpha = Math.atan2(Math.sin(A), J);
+			var Y_upper = Math.acos(K/R) + alpha;
+			//var ele_cut = Math.round(Y);
+			
+			//var Y_lower = -(Math.acos(K/R) - alpha);
+			var Y_lower = alpha - Math.acos(K/R);
+			
+			for (var y = 0; y < height; ++y) {
 				
-				var index = (y * width2 + x) * 4;
+				var index = (y * width + x) * 4;
 				
-				var ele = 90 - (y * 180 / height2);
+				var ele = 90 - (y * 180 / height);
 				var ele_rad = ele * Math.PI / 180;
-				
-				var azi = x * 360 / width2;
-				var azi_rad = azi * Math.PI / 180;
-				
+
+				data[index + 0] -= side;
+				data[index + 1] -= side;
+				data[index + 2] -= side;
+				data[index + 3] = 255;
+
 				var px = Math.cos(ele_rad)*Math.cos(azi_rad);
 				var py = Math.cos(ele_rad)*Math.sin(azi_rad);
 				var pz = Math.sin(ele_rad);
-				
+
 				var vx = px - nx;
 				var vy = py - ny;
 				var vz = pz - nz;
-				
+
 				var d = dotProduct(nx, ny, nz, vx, vy, vz);
 				
-				if (d > 0) {
-					data[index] += side;
-					//data[index] = 255;
-					data[++index] += side;
-					data[++index] += side;
-					data[++index] = 255;
+				//if (ele_rad === Y) {
+				if (Math.round(ele_rad*10) === Math.round(Y_upper*10)) {
+				//if (Math.round(ele_rad*10) === Math.round(Y_lower*10)) {
+					data[index + 0] = 255;
+					data[index + 1] = 0;
+					data[index + 2] = 0;
+					data[index + 3] = 255;
 				} else {
-					data[index] -= side;
-					//data[index] = 0;
-					data[++index] -= side;
-					data[++index] -= side;
-					data[++index] = 255;
+					if (d > 0) {
+						data[index + 0] += side;
+						data[index + 1] += side;
+						data[index + 2] += side;
+						data[index + 3] = 255;
+					} else {
+						data[index + 0] -= side;
+						data[index + 1] -= side;
+						data[index + 2] -= side;
+						data[index + 3] = 255;
+					}
 				}
 				
 			}
 		}
-	}*/
-	ctx2.putImageData(imageData, 0, 0);
+	}
+	//ctx2.putImageData(imageData, 0, 0);
 	
 	//ctx2.fillStyle = "yellow";
 	//ctx2.fillRect(0, 0, 75, 75);
 	
-	
-	
-	return canvas2;
+	return data;
 }
 
-function generateCutTextureDataTESTING(width, height, iterations) {
+function generateCutTextureDataBOXED(width, height, iterations) {
 	
 	var data = new Array();
 	
@@ -946,17 +929,6 @@ function generateCutTextureData(width, height, iterations) {
 		var plane_azi_rad_max = plane_azi_rad + plane_azi_rad_diff;
 		var plane_azi_max = plane_azi_rad_max * 180 / Math.PI;
 		
-		/*var cutType = "";
-		if (plane_ele_max > 90) {
-			cutType = "north";
-		} else if (plane_ele_min < -90) {
-			cutType = "south";
-		} else if (plane_azi_max < plane_azi_min) {
-			cutType = "straddle";
-		} else {
-			cutType = "normal";
-		}*/
-		
 		for (var x = 0; x < width; ++x) {
 
 			for (var y = 0; y < height; ++y) {
@@ -983,13 +955,11 @@ function generateCutTextureData(width, height, iterations) {
 				
 				if (d > 0) {
 					data[index] += side;
-					//data[index] = 255;
 					data[++index] += side;
 					data[++index] += side;
 					data[++index] = 255;
 				} else {
 					data[index] -= side;
-					//data[index] = 0;
 					data[++index] -= side;
 					data[++index] -= side;
 					data[++index] = 255;
@@ -998,10 +968,6 @@ function generateCutTextureData(width, height, iterations) {
 			}
 		}
 	}
-	//ctx2.putImageData(imageData, 0, 0);
-	
-	//ctx2.fillStyle = "yellow";
-	//ctx2.fillRect(0, 0, 75, 75);
 	
 	return data;
 }
@@ -1030,7 +996,10 @@ function generateEarth() {
 function generatePlanet() {
 	//var canvas2 = ;
 	//var datatemp = generateCutTextureData(300, 150, 1000);
-	var datatemp = generateCutTextureDataTESTING(300, 150, 1000);
+	var datatemp = generateCutTextureDataBOXED(300, 150, 1000);
+	//var datatemp = generateCutTextureDataALGORITHM(300, 150, 1);
+	
+	
 	
 	var texture = new THREE.Texture(generateTexture(datatemp));
 	texture.needsUpdate = true;
@@ -1062,7 +1031,3 @@ function generatePlanet() {
 function dotProduct(x1, y1, z1, x2, y2, z2) {
 	return x1*x2 + y1*y2 + z1*z2;
 }
-
-/*
- * normal-plane - x: xsin
- */
