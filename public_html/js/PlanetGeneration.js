@@ -501,18 +501,18 @@ function generateCutTextureDataALGORITHM(width, height, iterations) {
 	
 	for (var iteration = 0; iteration < iterations; ++iteration) {
 		var r = Math.random();
-		r = 0.6;
+		//r = 0.6;
 		
 		var plane_ele = Math.random()*180 - 90;
-		plane_ele = -80;
+		//plane_ele = 20;
 		var plane_ele_rad = plane_ele * Math.PI / 180;
 		
 		var plane_azi = Math.random()*360;
-		var plane_azi = 20;
+		//var plane_azi = 0;
 		var plane_azi_rad = plane_azi * Math.PI / 180;
 		
 		var side = Math.random() > 0.5 ? -1 : 1;
-		side = 10;
+		//side = 10;
 		
 		var nx = r * Math.cos(plane_ele_rad)*Math.cos(plane_azi_rad);
 		var ny = r * Math.cos(plane_ele_rad)*Math.sin(plane_azi_rad);
@@ -550,87 +550,178 @@ function generateCutTextureDataALGORITHM(width, height, iterations) {
 		}
 		var plane_azi_max = plane_azi_rad_max * 180 / Math.PI;
 		
-		
+		var ignore = false;
 		var cutType = "";
+		
 		if (plane_ele_max > 90) {
 			cutType = "north";
 		} else if (plane_ele_min < -90) {
 			cutType = "south";
 		} else if (plane_azi_max < plane_azi_min) {
 		//} else if (plane_azi_min < 0 || plane_azi_max > 360) {
+			if (azi_rad > plane_azi_rad_min && azi_rad < plane_azi_rad_max) {
+				ignore = true;
+			}
 			cutType = "straddle";
 		} else {
+			if (azi_rad < plane_azi_rad_min || azi_rad > plane_azi_rad_max) {
+				ignore = true;
+			}
 			cutType = "normal";
 		}
 		
 		
-		
-		
-		for (var x = 0; x < width; ++x) {
-			
-			var azi = x * 360 / width;
-			var azi_rad = azi * Math.PI / 180;
-			
-			
-			var A = plane_ele_rad;
-			var B = plane_azi_rad;
-			var Z = azi_rad;
-			
-			var J = Math.cos(Z)*Math.cos(A)*Math.cos(B) + Math.sin(Z)*Math.cos(A)*Math.sin(B);
-			
-			var R = Math.sqrt(J*J + (Math.sin(A))*(Math.sin(A)));
-			
-			var K = (nx*nx + ny*ny + nz*nz)/r;
-			var alpha = Math.atan2(Math.sin(A), J);
-			var Y_upper = Math.acos(K/R) + alpha;
-			//var ele_cut = Math.round(Y);
-			
-			//var Y_lower = -(Math.acos(K/R) - alpha);
-			var Y_lower = alpha - Math.acos(K/R);
-			
-			for (var y = 0; y < height; ++y) {
-				
-				var index = (y * width + x) * 4;
-				
-				var ele = 90 - (y * 180 / height);
-				var ele_rad = ele * Math.PI / 180;
-
+		if (ignore) {
 				data[index + 0] -= side;
 				data[index + 1] -= side;
 				data[index + 2] -= side;
 				data[index + 3] = 255;
+			} else {
+		
+			for (var x = 0; x < width; ++x) {
 
-				var px = Math.cos(ele_rad)*Math.cos(azi_rad);
-				var py = Math.cos(ele_rad)*Math.sin(azi_rad);
-				var pz = Math.sin(ele_rad);
-
-				var vx = px - nx;
-				var vy = py - ny;
-				var vz = pz - nz;
-
-				var d = dotProduct(nx, ny, nz, vx, vy, vz);
+				var azi = x * 360 / width;
+				var azi_rad = azi * Math.PI / 180;
 				
-				//if (ele_rad === Y) {
-				if (Math.round(ele_rad*10) === Math.round(Y_upper*10)) {
-				//if (Math.round(ele_rad*10) === Math.round(Y_lower*10)) {
-					data[index + 0] = 255;
-					data[index + 1] = 0;
-					data[index + 2] = 0;
+				
+				var A = plane_ele_rad;
+				var B = plane_azi_rad;
+				var Z = azi_rad;
+
+				var J = Math.cos(Z)*Math.cos(A)*Math.cos(B) + Math.sin(Z)*Math.cos(A)*Math.sin(B);
+
+				var R = Math.sqrt(J*J + (Math.sin(A))*(Math.sin(A)));
+
+				var K = (nx*nx + ny*ny + nz*nz)/r;
+				var alpha = Math.atan2(Math.sin(A), J);
+				var Y_upper = Math.acos(K/R) + alpha;
+				//var ele_cut = Math.round(Y);
+
+				//var Y_lower = -(Math.acos(K/R) - alpha);
+				var Y_lower = alpha - Math.acos(K/R);
+
+				for (var y = 0; y < height; ++y) {
+
+					var index = (y * width + x) * 4;
+
+					var ele = 90 - (y * 180 / height);
+					var ele_rad = ele * Math.PI / 180;
+
+					data[index + 0] -= side;
+					data[index + 1] -= side;
+					data[index + 2] -= side;
 					data[index + 3] = 255;
-				} else {
-					if (d > 0) {
-						data[index + 0] += side;
-						data[index + 1] += side;
-						data[index + 2] += side;
-						data[index + 3] = 255;
-					} else {
-						data[index + 0] -= side;
-						data[index + 1] -= side;
-						data[index + 2] -= side;
-						data[index + 3] = 255;
+
+					var px = Math.cos(ele_rad)*Math.cos(azi_rad);
+					var py = Math.cos(ele_rad)*Math.sin(azi_rad);
+					var pz = Math.sin(ele_rad);
+
+					var vx = px - nx;
+					var vy = py - ny;
+					var vz = pz - nz;
+
+					var d = dotProduct(nx, ny, nz, vx, vy, vz);
+
+					//if (ele_rad === Y) {
+					
+					
+					switch (cutType) {
+						case "north":
+							//if (Math.round(ele_rad*10) === Math.round(Y_upper*10)) {
+							if (ele_rad > Y_lower) {
+							//if (Math.round(ele_rad*10) === Math.round(Y_lower*10)) {
+							//	data[index + 0] = 255;
+							//	data[index + 1] = 0;
+							//	data[index + 2] = 0;
+							//	data[index + 3] = 255;
+							//} else {
+							//	if (d > 0) {
+									data[index + 0] += side;
+									data[index + 1] += side;
+									data[index + 2] += side;
+									data[index + 3] = 255;
+								} else {
+									data[index + 0] -= side;
+									data[index + 1] -= side;
+									data[index + 2] -= side;
+									data[index + 3] = 255;
+							//	}
+							}
+							break;
+						case "south":
+							if (ele_rad < Y_upper) {
+							//if (Math.round(ele_rad*10) === Math.round(Y_upper*10)) {
+							//if (Math.round(ele_rad*10) === Math.round(Y_lower*10)) {
+								//data[index + 0] = 255;
+								//data[index + 1] = 0;
+								//data[index + 2] = 0;
+								//data[index + 3] = 255;
+								
+								
+								data[index + 0] += side;
+								data[index + 1] += side;
+								data[index + 2] += side;
+								data[index + 3] = 255;
+							} else {
+								//if (d > 0) {
+								//	data[index + 0] += side;
+								//	data[index + 1] += side;
+								//	data[index + 2] += side;
+								//	data[index + 3] = 255;
+								//} else {
+									data[index + 0] -= side;
+									data[index + 1] -= side;
+									data[index + 2] -= side;
+									data[index + 3] = 255;
+								//}
+							}
+							break;
+						case "straddle":
+							if (ele_rad < Y_upper && ele_rad > Y_lower) {
+							//	data[index + 0] = 255;
+							//	data[index + 1] = 0;
+							//	data[index + 2] = 0;
+							//	data[index + 3] = 255;
+							//} else {
+							//	if (d > 0) {
+									data[index + 0] += side;
+									data[index + 1] += side;
+									data[index + 2] += side;
+									data[index + 3] = 255;
+								} else {
+									data[index + 0] -= side;
+									data[index + 1] -= side;
+									data[index + 2] -= side;
+									data[index + 3] = 255;
+							//	}
+							}
+							break;
+						case "normal":
+							if (ele_rad < Y_upper && ele_rad > Y_lower) {
+							//if (Math.round(ele_rad*10) === Math.round(Y_upper*10) || Math.round(ele_rad*10) === Math.round(Y_lower*10)) {
+							//	data[index + 0] = 255;
+							//	data[index + 1] = 0;
+							//	data[index + 2] = 0;
+							//	data[index + 3] = 255;
+							//} else {
+							//	if (d > 0) {
+									data[index + 0] += side;
+									data[index + 1] += side;
+									data[index + 2] += side;
+									data[index + 3] = 255;
+								} else {
+									data[index + 0] -= side;
+									data[index + 1] -= side;
+									data[index + 2] -= side;
+									data[index + 3] = 255;
+							//	}
+							}
+							break;
 					}
+					
+					
+
 				}
-				
 			}
 		}
 	}
@@ -753,10 +844,10 @@ function generateCutTextureDataBOXED(width, height, iterations) {
 				
 				if (outside) {
 					//if (side > 0) {
-						data[index] -= side;
-						data[++index] -= side;
-						data[++index] -= side;
-						data[++index] = 255;
+						data[index + 0] -= side;
+						data[index + 1] -= side;
+						data[index + 2] -= side;
+						data[index + 3] = 255;
 					//} else {
 					//	data[index] = 200;
 					//	data[++index] = 200;
@@ -798,10 +889,10 @@ function generateCutTextureDataBOXED(width, height, iterations) {
 					}
 					
 					if (ignore) {
-						data[index] -= side;
-						data[++index] -= side;
-						data[++index] -= side;
-						data[++index] = 255;
+						data[index + 0] -= side;
+						data[index + 1] -= side;
+						data[index + 2] -= side;
+						data[index + 3] = 255;
 						//data[index] = 255;
 						//data[++index] = 128;
 						//data[++index] = 128;
@@ -824,10 +915,10 @@ function generateCutTextureDataBOXED(width, height, iterations) {
 						var d = dotProduct(nx, ny, nz, vx, vy, vz);
 
 						if (d > 0) {
-							data[index] += side;
-							data[++index] += side;
-							data[++index] += side;
-							data[++index] = 255;
+							data[index + 0] += side;
+							data[index + 1] += side;
+							data[index + 2] += side;
+							data[index + 3] = 255;
 							
 							/*if (side > 0) {
 								data[index] = 200;
@@ -842,10 +933,10 @@ function generateCutTextureDataBOXED(width, height, iterations) {
 							}*/
 
 						} else {
-							data[index] -= side;
-							data[++index] -= side;
-							data[++index] -= side;
-							data[++index] = 255;
+							data[index + 0] -= side;
+							data[index + 1] -= side;
+							data[index + 2] -= side;
+							data[index + 3] = 255;
 							/*if (side > 0) {
 								data[index] = 50;
 								data[++index] = 50;
@@ -997,7 +1088,7 @@ function generatePlanet() {
 	//var canvas2 = ;
 	//var datatemp = generateCutTextureData(300, 150, 1000);
 	var datatemp = generateCutTextureDataBOXED(300, 150, 1000);
-	//var datatemp = generateCutTextureDataALGORITHM(300, 150, 1);
+	//var datatemp = generateCutTextureDataALGORITHM(300, 150, 1000);
 	
 	
 	
@@ -1014,17 +1105,17 @@ function generatePlanet() {
 	textureSpecular.needsUpdate = true;
 	
 	return planetMaterial = new THREE.MeshPhongMaterial({
-		map: textureColour,
-		//map: texture,
+		//map: textureColour,
+		map: texture,
 		side: THREE.FrontSide,
 		transparent: false,
-		opacity: 1,
+		opacity: 1//,
 		
-		bumpMap: textureHeight,
-		bumpScale: 0.05,
+		//bumpMap: textureHeight,
+		//bumpScale: 0.05,
 		
-		specularMap: textureSpecular,
-		specular: new THREE.Color('grey')
+		//specularMap: textureSpecular,
+		//specular: new THREE.Color('grey')
 	});
 }
 
